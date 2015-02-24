@@ -102,7 +102,7 @@ void draw(num frame) {
   ctx.stroke();
   ctx.restore();
   
-  drawPoint(endPoint, 'white');
+  drawPoint(endPoint, 'cyan');
   
   ctx.save();
   ctx.strokeStyle = 'red';
@@ -116,7 +116,7 @@ void draw(num frame) {
   common.Vector endDirection = direction.rotate(side == Side.LEFT ? (360-angle) : angle);
   
   ctx.save();
-  ctx.strokeStyle = 'white';
+  ctx.strokeStyle = 'cyan';
   ctx.beginPath();
   ctx.moveTo(endPoint.x, endPoint.y);
   ctx.lineTo(endPoint.x + endDirection.x * radius,  endPoint.y + endDirection.y * radius);
