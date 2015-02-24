@@ -1,10 +1,11 @@
+library curvegame;
+
 import 'dart:html';
 import 'dart:math';
 import 'dart:convert';
 import 'dart:async';
 //import "dart:isolate";
-
-import 'DouglasPeucker.dart';
+// import 'package:curvegame/DouglasPeucker.dart';
 
 List<Curve> curves = new List<Curve>();
 CanvasElement canvas;
