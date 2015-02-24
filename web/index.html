@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>curvegame</title>
+      <link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700' rel='stylesheet' type='text/css'>
+      <link rel="stylesheet" href="styles/main.css">
+      <!--<link rel="styhesheet" href="css/font-awesome.min.css">-->
+      <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  </head>
+  
+  <body>
+    <div id="overlay-login" class="flex layout">
+      <div id="login">
+        <input type="text" id="playername" placeholder="Your name">
+        
+        <input type="text" id="gameid" placeholder="Game ID">
+        
+        <input type="password" id="gamepassword" placeholder="Password">
+        
+        <button class="button" id="join">Join Game</button>
+      </div>
+    </div>
+    <div id="game" class="flex layout">
+      <div id="left">
+        <div><button class="button ready" type="button" id="ready">Not Ready</button></div>
+        Players
+        
+        <ul id="players"></ul>
+        
+        Use your arrow keys (<i class="fa fa-arrow-left"></i> and <i class="fa fa-arrow-right"></i>) to move your curve. Collect special items to speed up, slow down your curve.
+      </div>
+      <div id="right">
+        <canvas id="canvas" width="800" height="800"></canvas>
+      </div>
+    </div>
+    
+    <script type="application/dart" src="main.dart"></script>
+    <script data-pub-inline src="packages/browser/dart.js"></script>
+  </body>
+</html>
