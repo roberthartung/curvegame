@@ -260,11 +260,9 @@ class Game extends common.Game<Player> {
       switch(ev.keyCode) {
         case KeyCode.LEFT :
           webSocket.send(JSON.encode({'type': 'left_key_pressed'}));
-          // myCurve.leftKeyPressed = true;
         break;
         case KeyCode.RIGHT :
           webSocket.send(JSON.encode({'type': 'right_key_pressed'}));
-          // myCurve.rightKeyPressed = true;
           break;
       }
     });
@@ -274,11 +272,9 @@ class Game extends common.Game<Player> {
       switch(ev.keyCode) {
         case KeyCode.LEFT :
           webSocket.send(JSON.encode({'type': 'left_key_released'}));
-          //myCurve.leftKeyPressed = false;
         break;
         case KeyCode.RIGHT :
           webSocket.send(JSON.encode({'type': 'right_key_released'}));
-          // myCurve.rightKeyPressed = false;
           break;
       }
     });

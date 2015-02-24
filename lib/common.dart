@@ -6,6 +6,7 @@ part 'src/common/entity.dart';
 part 'src/common/pathsegment.dart';
 part 'src/common/game.dart';
 part 'src/common/player.dart';
+part 'src/common/vector.dart';
 
 const int SERVER_PORT = 1337;
 

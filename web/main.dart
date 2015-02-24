@@ -39,6 +39,10 @@ Future<bool> connectToServer(String localPlayerName, String gameId, String gameP
   
   webSocket.onClose.listen((CloseEvent ev) {
     print('webSocket closed. ${ev.code} ${ev.reason}');
+    
+    querySelector('#overlay-login').style.display = 'flex';
+    querySelector('#game').style.display = 'none';
+    // TODO(rh): Add error message
   });
   
   return completer.future;
