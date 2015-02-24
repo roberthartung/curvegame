@@ -1,15 +1,11 @@
-part of curvegame_server;
+part of curvegame.server;
 
 const int ROTATION_STEP = 1;
+const int TICK_DELAY = 15;
+const int TICKS_PER_SECONDS = (1000.0 ~/ TICK_DELAY);
 
-class Game {
+class Game extends common.Game<Player> {
   List<String> colors = ['red', 'green', 'yellow', 'blue', 'cyan', 'white', 'pink'];
-  
-  String gameId;
-  
-  List<Player> players;
-  
-  String password = null;
   
   StreamController _onEmptyController = new StreamController.broadcast();
   
@@ -17,7 +13,22 @@ class Game {
   
   int playerLimit = 2;
   
-  Game(this.gameId, this.password) {
+  Map positions = {};
+   
+  Timer tickTimer;
+  
+  Timer endGameTimer = null;
+   
+  String winningPlayer = null;
+   
+  // First spawn after 5 seconds
+  int nextEntitySpawnTick = TICKS_PER_SECONDS*5;
+   
+  int tickCount = 0;
+     
+  common.Entity entity = null;
+
+  Game(gameId, password) : super(gameId, password) {
     players = new List<Player>();
   }
   
@@ -26,20 +37,33 @@ class Game {
       return false;
     }
     
+    print('[$gameId] Player ${player.name} added');
+    
     player.color = colors.removeAt(0);
-    // Send player's name to every other player
+    if(players.length == 0) {
+      player.game_owner = true;
+    }
+    
+    // Welcome
+    print('Send welcome to ${player.name}');
+    player.send({'type':'welcome', 'player': {'name': player.name, 'color': player.color, 'ready': player.isReady}, 'game_owner': player.game_owner});
+    
     Map playerInformation = {'type': 'join', 'player': {'name': player.name, 'color': player.color, 'ready': player.isReady}};
+    
+    // Send join of the player himself to add him to the list
+    // Send it here because the first joined player will be taken as the local player
+    player.send(playerInformation);
+    
+    // Exchange player information with other players
+    // One message to each other player
+    // One message per current player to new player
     players.forEach((Player otherPlayer) {
       otherPlayer.send(playerInformation);
       player.send({'type':'join', 'player': {'name': otherPlayer.name, 'color': otherPlayer.color, 'ready': otherPlayer.isReady}});
     });
+    
     players.add(player);
-    if(players.first == player) {
-      player.game_owner = true; 
-    }
-    player.send({'type':'welcome', 'player': {'name': player.name, 'color': player.color, 'ready': player.isReady}, 'game_owner': player.game_owner});
-    // Send join of the player himself to add him to the list
-    player.send(playerInformation);
+    
     
     return true;
   }
@@ -109,10 +133,6 @@ class Game {
     }
   }
   
-  int width = 800;
-  
-  int height = 800;
-  
   void init() {
     print('[$gameId] Initialized');
     Random r = new Random();
@@ -133,16 +153,12 @@ class Game {
     return position;
   }
   
-  Map positions = {};
-  
-  Timer tickTimer;
-  
   void _start() {
     players.forEach((Player player) {
       player.send({'type': 'start'});
     });
     
-    tickTimer = new Timer.periodic(new Duration(milliseconds: 15), gameTick);
+    tickTimer = new Timer.periodic(new Duration(milliseconds: TICK_DELAY), gameTick);
   }
   
   void sendPositions() {
@@ -154,10 +170,6 @@ class Game {
   /**
    * Called from Player to notify others that he is collided
    */
-  
-  Timer endGameTimer = null;
-  
-  String winningPlayer = null;
   
   void playerCollision(Player player) {
     int playersPlayingCount = 0;
@@ -193,7 +205,26 @@ class Game {
     });
   }
   
+  void spawnEntity() {
+    Random random = new Random();
+    String type = common.ICONS.keys.elementAt(random.nextInt(common.ICONS.keys.length-1));
+    print('New entity: $type');
+    common.Entity entity = new common.Entity(type, random.nextInt(width), random.nextInt(height));
+    players.forEach((Player player) {
+      player.send({'type': 'entity_spawn', 'entity': entity});
+    });
+  }
+  
   void gameTick(Timer t) {
+    tickCount++;
+    
+    if(tickCount == nextEntitySpawnTick) {
+      spawnEntity();
+      Random random = new Random();
+      // Min 3, max 8 seconds
+      nextEntitySpawnTick = tickCount + TICKS_PER_SECONDS * (3 + random.nextInt(5));
+    }
+    
     players.forEach((Player player) {
       if(player.leftKeyPressed) {
         player.angle -= ROTATION_STEP;

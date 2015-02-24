@@ -1,35 +1,15 @@
-part of curvegame_server;
+part of curvegame.server;
 
-class Player {
+class Player extends common.Player<Game> {
   WebSocket webSocket;
   
-  Game game;
-  
-  String name;
-  
-  bool game_owner = false;
-  
-  bool isReady = false;
-  
   Stream dataStream;
-  
-  String color = 'red';
   
   bool leftKeyPressed = false;
     
   bool rightKeyPressed = false;
   
-  Point position;
-  
-  Point direction;
-  
-  num angle;
-  
-  bool isPlaying = true;
-  
-  List<Point> path = [];
-  
-  Player(this.game, this.dataStream, this.webSocket, this.name) {
+  Player(name, Game game, this.dataStream, this.webSocket) : super(name, game) {
     webSocket.done.then((d) {
       game.removePlayer(this);
     });
@@ -38,7 +18,19 @@ class Player {
   }
   
   void send(Object o) {
-    webSocket.add(JSON.encode(o));
+    try {
+      webSocket.add(JSON.encode(o, toEncodable: (obj) {
+        if(obj is common.Entity) {
+          return obj.toObject();
+        }
+        
+        print('Unknown object to encode');
+        
+        return {'error': 'encoding_error'};
+      }));
+    } catch(ex) {
+      print('Exception: $ex');
+    }
   }
   
   void onData(json) {
