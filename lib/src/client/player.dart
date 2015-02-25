@@ -49,6 +49,7 @@ class Player extends common.Player<Game> {
   }
   
   void collision(String reason) {
+    isPlaying = false;
     game.webSocket.send(JSON.encode({'type':'collision', 'reason': reason}));
   }
   

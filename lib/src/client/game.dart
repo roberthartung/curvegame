@@ -25,7 +25,9 @@ class Game extends common.Game<Player> {
   Map<String, Player> playersMap = {};
   
   String myPlayerColor = 'red';
+  
   bool started = false;
+  
   List<common.DrawableEntity> entities = [];
   
   Game(String gameId, String password, this.webSocket, bool this.isGameOwner) : super(gameId, password) {
@@ -41,17 +43,62 @@ class Game extends common.Game<Player> {
     }
     webSocket.onMessage.listen(onMessage);
     
-    readyButton.onClick.listen((MouseEvent ev) {
-      // If local player was not ready before -> now ready
-      // Status will be updated after message from server
-      if(!localPlayer.isReady) {
-        webSocket.sendString(JSON.encode({'type': 'ready'}));
-        readyButton.text = 'Ready';
-      } else {
-        webSocket.sendString(JSON.encode({'type': 'ready_abort'}));
-        readyButton.text = 'Not Ready';
-      }
-    });
+    readyButton.onClick.listen(onReadyButtonClick);
+    
+    document.onKeyDown.listen(onKeyDown);
+    document.onKeyUp.listen(onKeyUp);
+  }
+  
+  void onReadyButtonClick(MouseEvent ev) {
+    // If local player was not ready before -> now ready
+    // Status will be updated after message from server
+    if(!localPlayer.isReady) {
+      webSocket.sendString(JSON.encode({'type': 'ready'}));
+      readyButton.text = 'Ready';
+    } else {
+      webSocket.sendString(JSON.encode({'type': 'ready_abort'}));
+      readyButton.text = 'Not Ready';
+    }
+  }
+  
+  void onKeyUp(KeyboardEvent ev) {
+    if(localPlayer == null || !localPlayer.isPlaying) {
+      return;
+    }
+    
+    ev.preventDefault();
+    switch(ev.keyCode) {
+      case KeyCode.LEFT :
+        webSocket.send(JSON.encode({'type': 'left_key_released'}));
+        leftKeyPressed = false;
+      break;
+      case KeyCode.RIGHT :
+        webSocket.send(JSON.encode({'type': 'right_key_released'}));
+        rightKeyPressed = false;
+        break;
+    }
+  }
+  
+  void onKeyDown(KeyboardEvent ev) {
+    if(localPlayer == null || !localPlayer.isPlaying) {
+      return;
+    }
+    
+    ev.preventDefault();
+    switch(ev.keyCode) {
+      case KeyCode.LEFT :
+        if(!leftKeyPressed) {
+          webSocket.send(JSON.encode({'type': 'left_key_pressed'}));
+          leftKeyPressed = true;
+        }
+      break;
+      case KeyCode.RIGHT :
+        if(!rightKeyPressed) {
+          webSocket.send(JSON.encode({'type': 'right_key_pressed'}));
+          rightKeyPressed = true;
+        }
+        break;
+    }
   }
   
   void addPlayer(Player player) {
@@ -152,10 +199,6 @@ class Game extends common.Game<Player> {
         Player player = getPlayer(data);
         player.isPlaying = false;
         print('[${player.name}] Collision.');
-        /*
-        client.Player curve = (players[json['player']['name']]['curve'] as client.Player);
-        curve.isPlaying = false;
-        */
         break;
       case "countdown" :
         readyButton.text = 'Game starts in ${data['time']}';
@@ -170,10 +213,12 @@ class Game extends common.Game<Player> {
         break;
       case "segment" :
         Player player = getPlayer(data);
-        if(data.containsKey("arc")) {
-          player.pathSegments.add(new common.ArcSegment.fromObject(data['arc']));
-        } else if(data.containsKey("line")) {
-          player.pathSegments.add(new common.LineSegment.fromObject(data['line']));
+        if(player.isPlaying) {
+          if(data.containsKey("arc")) {
+            player.pathSegments.add(new common.ArcSegment.fromObject(data['arc']));
+          } else if(data.containsKey("line")) {
+            player.pathSegments.add(new common.LineSegment.fromObject(data['line']));
+          }
         }
         break;
       case "positions" :
@@ -269,42 +314,14 @@ class Game extends common.Game<Player> {
     });
   }
   
+  /**
+   * Start current game
+   */
+  
+  bool leftKeyPressed = false;
+  bool rightKeyPressed = false;
+  
   void start() {
     window.requestAnimationFrame(gameLoop);
-
-    bool leftKeyPressed = false;
-    bool rightKeyPressed = false;
-    
-    document.onKeyDown.listen((KeyboardEvent ev) {
-      ev.preventDefault();
-      switch(ev.keyCode) {
-        case KeyCode.LEFT :
-          if(!leftKeyPressed) {
-            webSocket.send(JSON.encode({'type': 'left_key_pressed'}));
-            leftKeyPressed = true;
-          }
-        break;
-        case KeyCode.RIGHT :
-          if(!rightKeyPressed) {
-            webSocket.send(JSON.encode({'type': 'right_key_pressed'}));
-            rightKeyPressed = true;
-          }
-          break;
-      }
-    });
-    
-    document.onKeyUp.listen((KeyboardEvent ev) {
-      ev.preventDefault();
-      switch(ev.keyCode) {
-        case KeyCode.LEFT :
-          webSocket.send(JSON.encode({'type': 'left_key_released'}));
-          leftKeyPressed = false;
-        break;
-        case KeyCode.RIGHT :
-          webSocket.send(JSON.encode({'type': 'right_key_released'}));
-          rightKeyPressed = false;
-          break;
-      }
-    });
   }
 }

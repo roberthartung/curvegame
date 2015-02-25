@@ -235,37 +235,25 @@ class Game extends common.Game<Player> {
       nextEntitySpawnTick = tickCount + TICKS_PER_SECONDS * (3 + random.nextInt(5));
     }
     
+    positions = {};
+    
     // One tick for each player
     players.forEach((Player player) {
-      // If it's a line simply increase the distance
-      if(player.currentSegment is common.LineSegment) {
-        common.LineSegment line = player.currentSegment;
-        line.distance += LINE_STEP;
-      } else if(player.currentSegment is common.ArcSegment) {
-        // In case of an arc increase angle
-        common.ArcSegment arc = player.currentSegment;
-        arc.angle += ROTATION_STEP;
+      // Only make tick for player if playing
+      if(player.isPlaying) {
+        // If it's a line simply increase the distance
+        if(player.currentSegment is common.LineSegment) {
+          common.LineSegment line = player.currentSegment;
+          line.distance += LINE_STEP;
+        } else if(player.currentSegment is common.ArcSegment) {
+          // In case of an arc increase angle
+          common.ArcSegment arc = player.currentSegment;
+          arc.angle += ROTATION_STEP;
+        }
+        
+        player.position = player.currentSegment.getEndPoint();
+        positions[player.name] = getPlayerPosition(player);
       }
-      
-      player.position = player.currentSegment.getEndPoint();
-      positions[player.name] = getPlayerPosition(player);
-      
-      /*
-      if(player.leftKeyPressed) {
-        player.angle -= ROTATION_STEP;
-      } else if(player.rightKeyPressed) {
-        player.angle += ROTATION_STEP;
-      } else {
-        // Increase line segment
-      }
-      
-      num x = cos(player.angle/180*PI);
-      num y = sin(player.angle/180*PI);
-      player.direction = new Point(x,y);
-      player.position -= player.direction;
-      player.path.add(player.position);
-      positions[player.name] = getPlayerPosition(player);
-      */
     });
     
     sendPositions();
