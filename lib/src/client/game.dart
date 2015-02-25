@@ -69,7 +69,7 @@ class Game extends common.Game<Player> {
     }
   
   void onMessage(MessageEvent ev) {
-    var data = JSON.decode(ev.data);
+    Map data = JSON.decode(ev.data);
     switch(data['type']) {
       case "join" :
         Player player = new Player.fromObject(data['player'], this);
@@ -168,10 +168,27 @@ class Game extends common.Game<Player> {
       case "entity_collect" :
         // Player collected a entity
         break;
+      case "segment" :
+        Player player = getPlayer(data);
+        if(data.containsKey("arc")) {
+          player.pathSegments.add(new common.ArcSegment.fromObject(data['arc']));
+        } else if(data.containsKey("line")) {
+          player.pathSegments.add(new common.LineSegment.fromObject(data['line']));
+        }
+        break;
       case "positions" :
           (data['positions'] as Map<String, Map>).forEach((String playerName, Map info) {
             Player player = getPlayerByName(playerName);
-            player.step(new Point(info['position']['x'], info['position']['y']));
+            
+            common.PathSegment newSegment;
+            if(info.containsKey('arc')) {
+              newSegment = new common.ArcSegment.fromObject(info['arc']);
+            } else if(info.containsKey('line')) {
+              newSegment = new common.LineSegment.fromObject(info['line']);
+            }
+            
+            player.step(new Point(info['position']['x'], info['position']['y']), newSegment);
+            // player.step(new Point(info['position']['x'], info['position']['y']));
             //print('position of player $playerName: $info');
             // client.Player curve = (players[playerName]['curve'] as client.Player);
             //curve.step();
@@ -204,20 +221,20 @@ class Game extends common.Game<Player> {
 
   void checkCollision(Player player) {
     // Check all other playing curves if they collide with the current drawn path
-   players.where((Player otherPlayer) => (otherPlayer != player && otherPlayer.isPlaying)).forEach((Player otherPlayer) {
-     // Check if anyone is colliding with use
-     //int start = new DateTime.now().millisecond;
-     if(ctx.isPointInStroke(otherPlayer.position.x, otherPlayer.position.y)) {
-       // If collision is detection always stop playing for that curve
-       print('[${player.name}] stopped playing.');
-       otherPlayer.isPlaying = false;
-       if(otherPlayer.isLocal) {
-         otherPlayer.collision('stroke');
-         print('[${otherPlayer.name}] Collsion with ${player.name}');
-       }
-     }
+    players.where((Player otherPlayer) => (otherPlayer != player && otherPlayer.isPlaying)).forEach((Player otherPlayer) {
+      // Check if anyone is colliding with use
+      //int start = new DateTime.now().millisecond;
+      if(ctx.isPointInStroke(otherPlayer.position.x, otherPlayer.position.y)) {
+        // If collision is detection always stop playing for that curve
+        print('[${player.name}] stopped playing.');
+        otherPlayer.isPlaying = false;
+        if(otherPlayer.isLocal) {
+          otherPlayer.collision('stroke');
+          print('[${otherPlayer.name}] Collsion with ${player.name}');
+        }
+      }
      //print((new DateTime.now().millisecond) - start);
-   });
+    });
   }
 
   void draw() {
@@ -255,14 +272,23 @@ class Game extends common.Game<Player> {
   void start() {
     window.requestAnimationFrame(gameLoop);
 
+    bool leftKeyPressed = false;
+    bool rightKeyPressed = false;
+    
     document.onKeyDown.listen((KeyboardEvent ev) {
       ev.preventDefault();
       switch(ev.keyCode) {
         case KeyCode.LEFT :
-          webSocket.send(JSON.encode({'type': 'left_key_pressed'}));
+          if(!leftKeyPressed) {
+            webSocket.send(JSON.encode({'type': 'left_key_pressed'}));
+            leftKeyPressed = true;
+          }
         break;
         case KeyCode.RIGHT :
-          webSocket.send(JSON.encode({'type': 'right_key_pressed'}));
+          if(!rightKeyPressed) {
+            webSocket.send(JSON.encode({'type': 'right_key_pressed'}));
+            rightKeyPressed = true;
+          }
           break;
       }
     });
@@ -272,9 +298,11 @@ class Game extends common.Game<Player> {
       switch(ev.keyCode) {
         case KeyCode.LEFT :
           webSocket.send(JSON.encode({'type': 'left_key_released'}));
+          leftKeyPressed = false;
         break;
         case KeyCode.RIGHT :
           webSocket.send(JSON.encode({'type': 'right_key_released'}));
+          rightKeyPressed = false;
           break;
       }
     });

@@ -17,46 +17,81 @@ void drawPoint(Point p, String color) {
 }
 
 Point position;
-Side side;
-int radius;
-int angle;
 common.Vector direction;
+common.ArcDirection side = common.ArcDirection.RIGHT;
+int radius = 30;
+int angle = 80;
+int width = 4;
 CanvasElement canvas;
 CanvasRenderingContext2D ctx;
 
+common.ArcSegment arcSegment;
+
+void createArc() {
+  arcSegment = new common.ArcSegment(direction, position, width, side, radius, angle);
+}
+
 void main() {
-  side = Side.RIGHT;
-  radius = 30;
-  angle = 90;
   position = new Point(100,100);
   canvas = querySelector('#canvas');
   ctx = canvas.getContext('2d');
-  direction = new common.Vector(2,1);
+  double radians = 22.5/180*math.PI;
+  direction = new common.Vector(math.cos(radians), math.sin(radians));
+  createArc();
     
   querySelector('#angle').onChange.listen((ev) {
     angle = int.parse(ev.target.value);
+    createArc();
   });
   
   querySelector('#radius').onChange.listen((ev) {
     radius = int.parse(ev.target.value);
+    createArc();
+  });
+  
+  querySelector('#directionAngle').onChange.listen((ev) {
+    double radians = double.parse(ev.target.value)/180*math.PI;
+    direction = new common.Vector(math.cos(radians), math.sin(radians));
+    createArc();
   });
   
   querySelector('#side').onChange.listen((ev) {
     switch(ev.target.value) {
       case 'left' :
-        side = Side.LEFT;
+        side = common.ArcDirection.LEFT;
         break;
       case 'right' :
-        side = Side.RIGHT;
+        side = common.ArcDirection.RIGHT;
         break;
     }
+    createArc();
   });
   
   window.requestAnimationFrame(draw);
 }
 
 void draw(num frame) {
+  /*
+  // Initial direction vector
   common.Vector directionVector = direction.rotate(side == Side.LEFT ? -90 : 90);
+  // Middle point
+  Point arcMiddle = new Point(position.x + directionVector.x * radius,  position.y + directionVector.y * radius);
+  common.Vector arcVector = directionVector.rotate(180);
+  num startAngle = arcVector.angle();
+  num endAngle;
+  if(side == Side.LEFT) {
+   endAngle = (startAngle+(360-angle) % 360);
+  } else {
+   endAngle = ((startAngle + angle) % 360);
+  }
+  
+  common.Vector endVector = arcVector.rotate(side == Side.LEFT ? (360-angle) : angle);
+  Point endPoint = new Point(arcMiddle.x + endVector.x * radius, arcMiddle.y + endVector.y * radius);
+  common.Vector endDirection = direction.rotate(side == Side.LEFT ? (360-angle) : angle);
+  */
+  
+  Point endPoint = arcSegment.getEndPoint();
+  common.Vector endDirection = arcSegment.getEndDirection();
   
   // Draw
   ctx.clearRect(0, 0, canvas.width,  canvas.height);
@@ -72,32 +107,17 @@ void draw(num frame) {
   ctx.strokeStyle = 'white';
   ctx.beginPath();
   ctx.moveTo(position.x, position.y);
-  ctx.lineTo(position.x + direction.x * radius,  position.y + direction.y * radius);
+  ctx.lineTo(position.x + direction.x * arcSegment.radius,  position.y + direction.y * arcSegment.radius);
   ctx.stroke();
   ctx.restore();
   
-  // Middle point
-  Point arcMiddle = new Point(position.x + directionVector.x * radius,  position.y + directionVector.y * radius);
   // Draw middle point
-  drawPoint(arcMiddle, 'yellow');
-  
-  common.Vector arcVector = directionVector.rotate(180);
-  
-  num startAngle = arcVector.angle();
-  num endAngle;
-  if(side == Side.LEFT) {
-    endAngle = (startAngle+(360-angle) % 360);
-  } else {
-    endAngle = ((startAngle + angle) % 360);
-  }
-  
-  common.Vector endVector = arcVector.rotate(side == Side.LEFT ? (360-angle) : angle);
-  Point endPoint = new Point(arcMiddle.x + endVector.x * radius, arcMiddle.y + endVector.y * radius);
+  drawPoint(arcSegment.arcMiddle, 'yellow');
   
   ctx.save();
   ctx.strokeStyle = 'yellow';
   ctx.beginPath();
-  ctx.moveTo(arcMiddle.x, arcMiddle.y);
+  ctx.moveTo(arcSegment.arcMiddle.x, arcSegment.arcMiddle.y);
   ctx.lineTo(endPoint.x, endPoint.y);
   ctx.stroke();
   ctx.restore();
@@ -109,17 +129,16 @@ void draw(num frame) {
   ctx.fillStyle = 'red';
   ctx.lineWidth = 5;
   ctx.beginPath();
-  ctx.arc(arcMiddle.x, arcMiddle.y, radius, startAngle/180*math.PI, endAngle/180*math.PI, side == Side.LEFT ? true : false);
+  arcSegment.draw(ctx);
+  //ctx.arc(arcMiddle.x, arcMiddle.y, radius, startAngle/180*math.PI, endAngle/180*math.PI, side == Side.LEFT ? true : false);
   ctx.stroke();
   ctx.restore();
-  
-  common.Vector endDirection = direction.rotate(side == Side.LEFT ? (360-angle) : angle);
   
   ctx.save();
   ctx.strokeStyle = 'cyan';
   ctx.beginPath();
   ctx.moveTo(endPoint.x, endPoint.y);
-  ctx.lineTo(endPoint.x + endDirection.x * radius,  endPoint.y + endDirection.y * radius);
+  ctx.lineTo(endPoint.x + endDirection.x * arcSegment.radius,  endPoint.y + endDirection.y * arcSegment.radius);
   ctx.stroke();
   ctx.restore();
   

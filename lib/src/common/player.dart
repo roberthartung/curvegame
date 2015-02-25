@@ -13,13 +13,15 @@ abstract class Player<G> {
   
   math.Point position;
   
-  math.Point direction;
-  
-  num angle;
+  Vector direction;
   
   bool isPlaying = true;
   
-  List<math.Point> path = [];
+  PathSegment currentSegment;
+  
+  // List<math.Point> path = [];
+  
+  List<PathSegment> pathSegments = [];
   
   Player(String this.name, G this.game);
 }

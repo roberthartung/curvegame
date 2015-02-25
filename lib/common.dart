@@ -4,11 +4,17 @@ import 'dart:math' as math;
 
 part 'src/common/entity.dart';
 part 'src/common/pathsegment.dart';
+part 'src/common/linesegment.dart';
+part 'src/common/arcsegment.dart';
 part 'src/common/game.dart';
 part 'src/common/player.dart';
 part 'src/common/vector.dart';
 
 const int SERVER_PORT = 1337;
+
+const int DEFAULT_LINE_WIDTH = 4;
+
+const int DEFAULT_ARC_RADIUS = 20;
 
 const Map<String, dynamic> ICONS = const {
   'bug': 0xf188,            // Makes yourself slower
@@ -25,3 +31,5 @@ const Map<String, dynamic> ICONS = const {
 };
 
 enum Target {OTHERS, SELF, ALL}
+
+enum ArcDirection {LEFT, RIGHT}

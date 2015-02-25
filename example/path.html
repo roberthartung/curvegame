@@ -7,13 +7,16 @@
     <title>path</title>
   </head>
   
-  <body>   
+  <body>
     <canvas id="canvas" width="500" height="500" style="background-color: black;"></canvas>
     <div>
       <select id="side">
         <option value="left">Left</option>
         <option value="right" selected="selected">Right</option>
       </select>
+    </div>
+    <div>
+      Direction <input type="range" min="0" max="359" step=".1" id="directionAngle" value="22.5">
     </div>
     <div>
       Angle <input type="range" min="0" max="359" id="angle" value="90">

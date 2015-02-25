@@ -7,7 +7,7 @@ class Player extends common.Player<Game> {
   
   bool leftKeyPressed = false;
     
-  bool rightKeyPressed = false;
+  bool rightKeyPressed = false;  
   
   Player(name, Game game, this.dataStream, this.webSocket) : super(name, game) {
     webSocket.done.then((d) {
@@ -33,8 +33,40 @@ class Player extends common.Player<Game> {
     }
   }
   
+  void checkDirection() {
+    // Notify others about new segment
+    Map oldSegment = currentSegment.toObject();
+    Map message = {'type': 'segment', 'player': {'name': name}};
+    if(currentSegment is common.ArcSegment) {
+      message['arc'] = oldSegment;
+    } else if(currentSegment is common.LineSegment) {
+      message['line'] = oldSegment;
+    }
+    game.players.forEach((Player player) {
+      player.send(message);
+    });
+    
+    // Take direction from last point of arc
+    if(currentSegment is common.ArcSegment) {
+      common.ArcSegment arc = currentSegment;
+      direction = arc.getEndDirection();
+      position = arc.getEndPoint();
+    }
+  }
+  
+  void beginArc(common.ArcDirection arcDirection) {
+    checkDirection();
+    currentSegment = new common.ArcSegment(direction, position, common.DEFAULT_LINE_WIDTH, arcDirection, common.DEFAULT_ARC_RADIUS, 0);
+  }
+  
+  void beginLine() {
+    checkDirection();
+    currentSegment = new common.LineSegment(direction, position, common.DEFAULT_LINE_WIDTH);
+  }
+  
   void onData(json) {
     var data = JSON.decode(json);
+    print("$name ${data['type']}");
     switch(data['type']) {
       case 'ready' :
         game.playerReady(this);
@@ -45,25 +77,33 @@ class Player extends common.Player<Game> {
         }
         break;
       case 'ready_abort' :
-          isReady = false;
-          game.playerReadyAbort(this);
+        isReady = false;
+        game.playerReadyAbort(this);
         break;
       case 'left_key_pressed' :
+        if(!leftKeyPressed) {
+          beginArc(common.ArcDirection.LEFT);
           leftKeyPressed = true;
+        }
         break;
       case 'right_key_pressed' :
+        if(!rightKeyPressed) {
+          beginArc(common.ArcDirection.RIGHT);
           rightKeyPressed = true;
+        }
         break;
       case 'left_key_released' :
-          leftKeyPressed = false;
+        beginLine();
+        leftKeyPressed = false;
         break;
       case 'right_key_released' :
-          rightKeyPressed = false;
+        beginLine();
+        rightKeyPressed = false;
         break;
       case 'collision' :
-          isPlaying = false;
-          game.playerCollision(this);
-          print('collision for $name reason: ${data['reason']}');
+        isPlaying = false;
+        game.playerCollision(this);
+        print('collision for $name reason: ${data['reason']}');
         break;
     }
   }

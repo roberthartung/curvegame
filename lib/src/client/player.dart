@@ -24,25 +24,21 @@ class Player extends common.Player<Game> {
     li.querySelector('.ready i').classes.toggleAll(['fa-check', 'fa-times']);
   }
   
-  bool step(Point newPosition) {
+  bool step(Point newPosition, common.PathSegment newSegment) {
     if(!isPlaying) {
       return false;
     }
     
-    points++;
     position = newPosition;
-    path.add(position);
+    currentSegment = newSegment;
+    points++;
+    
     li.querySelector('.points').text = '${points}';
-    
-    // 0.1px tolerance
-    //path = DouglasPeucker.douglasPeucker(path, 0.001);
-    
-    //print('step for $name at $position ${path.length}');
     
     bool isInside = game.gameArea.containsPoint(position);
     if(!isInside) {
       // Always immedeately stop other players
-      print('[$name] stopped playing (area).');
+      print('[$name] Stopped playing (area).');
       isPlaying = false;
       if(isLocal) {
         collision('area');
@@ -56,17 +52,36 @@ class Player extends common.Player<Game> {
     game.webSocket.send(JSON.encode({'type':'collision', 'reason': reason}));
   }
   
+  void drawPathSegment(CanvasRenderingContext2D ctx, common.PathSegment segment) {
+    ctx.save();
+    ctx.lineWidth = segment.width;
+    ctx.beginPath();
+    segment.draw(ctx);
+    ctx.stroke();
+    // TODO(rh): Collision detection!
+    ctx.restore();
+  }
+  
   bool draw(CanvasRenderingContext2D ctx) {
     // Draw Point
-    ctx.beginPath();
+    
     ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    
+    // Draw current position
+    ctx.beginPath();
+    // TODO(rh): Get Position from line/segment
     ctx.arc(position.x, position.y, 3, 0, 2*PI);
-    ctx.closePath();
+    ctx.closePath(); // needed?
     ctx.fill();
     
     // draw path & check for collision
+    
+    pathSegments.forEach((common.PathSegment segment) => drawPathSegment(ctx, segment));
+    drawPathSegment(ctx, currentSegment);
+    
+    /*
     ctx.lineWidth = 4;
-    ctx.strokeStyle = color;
     ctx.beginPath();
     ctx.moveTo(path.first.x, path.first.y);
     int offset = 0;
@@ -85,6 +100,7 @@ class Player extends common.Player<Game> {
       }
     });
     ctx.stroke();
+    */
     
     return false;
   }

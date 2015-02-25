@@ -35,6 +35,7 @@ void main() {
   
   ctx.stroke();
   
+  /*
   return;
   
   ctx.beginPath();
@@ -58,4 +59,5 @@ void main() {
   //ctx.arcTo(last.x, last.y, x2, y2, 10);
   
   ctx.stroke();
+  */
 }

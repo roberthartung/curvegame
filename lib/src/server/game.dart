@@ -1,6 +1,7 @@
 part of curvegame.server;
 
-const int ROTATION_STEP = 1;
+const int ROTATION_STEP = 2; // 2° per tick
+const int LINE_STEP = 1; // 1px per tick
 const int TICK_DELAY = 15;
 const int TICKS_PER_SECONDS = (1000.0 ~/ TICK_DELAY);
 
@@ -139,7 +140,11 @@ class Game extends common.Game<Player> {
     players.forEach((Player player) {
       // 100px border
       player.position = new Point(100+r.nextInt(width-200), 100+r.nextInt(height-200));
-      player.angle = r.nextInt(360);
+      // Direction
+      num angle = r.nextInt(360);
+      double radians = angle/180*PI;
+      player.direction = new common.Vector(cos(radians), sin(radians));
+      player.currentSegment = new common.LineSegment(player.direction, player.position, common.DEFAULT_LINE_WIDTH);
       positions[player.name] = getPlayerPosition(player);
     });
     
@@ -149,7 +154,12 @@ class Game extends common.Game<Player> {
   Map getPlayerPosition(Player player) {
     Map position = {};
     position['position'] = {'x': player.position.x, 'y': player.position.y};
-    position['angle'] = player.angle;
+    if(player.currentSegment is common.ArcSegment) {
+      position['arc'] = player.currentSegment.toObject();
+    } else {
+      position['line'] = player.currentSegment.toObject();
+    }
+    // position['angle'] = player.angle;
     return position;
   }
   
@@ -225,12 +235,28 @@ class Game extends common.Game<Player> {
       nextEntitySpawnTick = tickCount + TICKS_PER_SECONDS * (3 + random.nextInt(5));
     }
     
+    // One tick for each player
     players.forEach((Player player) {
+      // If it's a line simply increase the distance
+      if(player.currentSegment is common.LineSegment) {
+        common.LineSegment line = player.currentSegment;
+        line.distance += LINE_STEP;
+      } else if(player.currentSegment is common.ArcSegment) {
+        // In case of an arc increase angle
+        common.ArcSegment arc = player.currentSegment;
+        arc.angle += ROTATION_STEP;
+      }
+      
+      player.position = player.currentSegment.getEndPoint();
+      positions[player.name] = getPlayerPosition(player);
+      
+      /*
       if(player.leftKeyPressed) {
         player.angle -= ROTATION_STEP;
-      }
-      else if(player.rightKeyPressed) {
+      } else if(player.rightKeyPressed) {
         player.angle += ROTATION_STEP;
+      } else {
+        // Increase line segment
       }
       
       num x = cos(player.angle/180*PI);
@@ -239,6 +265,7 @@ class Game extends common.Game<Player> {
       player.position -= player.direction;
       player.path.add(player.position);
       positions[player.name] = getPlayerPosition(player);
+      */
     });
     
     sendPositions();
