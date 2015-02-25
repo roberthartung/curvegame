@@ -41,5 +41,7 @@ abstract class PathSegment {
   
   void draw(ctx);
   
+  bool containsPoint(math.Point point);
+  
   math.Point getEndPoint();
 }

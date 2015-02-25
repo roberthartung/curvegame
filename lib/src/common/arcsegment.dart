@@ -63,4 +63,30 @@ class ArcSegment extends PathSegment {
     map['angle'] = angle;
     return map;
   }
+  
+  bool containsPoint(math.Point point) {
+    double distance = point.distanceTo(arcMiddle);
+    if(distance < (radius - width/2) || distance > (radius+width/2)) {
+      return false;
+    }
+    
+    Vector pointDirection = new Vector(point.x - arcMiddle.x, point.y - arcMiddle.y);
+    double angle = pointDirection.angle();
+    
+    double endAngle = getEndAngle();
+    
+    if(startAngle <= angle && endAngle >= angle) {
+      return true;
+    }
+    
+    if(startAngle <= angle && (endAngle+360) >= angle) {
+      return true;
+    }
+    
+    if(startAngle-360 <= angle && (endAngle) >= angle) {
+      return true;
+    }
+    
+    return false;
+  }
 }
