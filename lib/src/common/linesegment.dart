@@ -1,9 +1,9 @@
 part of curvegame.common;
 
 class LineSegment extends PathSegment {
-  num distance = 0;
+  num distance;
   
-  LineSegment(Vector beginDirection, math.Point begin, int width, {this.distance}) : super(beginDirection, begin, width);
+  LineSegment(Vector beginDirection, math.Point begin, int width, {this.distance: 0}) : super(beginDirection, begin, width);
   
   LineSegment.fromObject(Map data) : super.fromObject(data) {
     distance = data['distance'];
