@@ -20,10 +20,16 @@ abstract class PathSegment {
   int width;
   
   /**
+   * Distance this segment starts at
+   */
+  
+  num startDistance;
+  
+  /**
    * Default constructor (server)
    */
   
-  PathSegment(this.beginDirection, this.begin, this.width);
+  PathSegment(this.beginDirection, this.begin, this.width, this.startDistance);
   
   /**
    * Object constructor (client)
@@ -33,11 +39,19 @@ abstract class PathSegment {
     beginDirection = new Vector(data['beginDirection']['x'], data['beginDirection']['y']);
     begin = new math.Point(data['begin']['x'], data['begin']['y']);
     width = data['width'];
+    startDistance = data['startDistance'];
   }
   
   Map toObject() {
-    return {'width': width, 'beginDirection': {'x': beginDirection.x, 'y': beginDirection.y}, 'begin': {'x': begin.x, 'y': begin.y}};
+    return {'width': width,
+      'startDistance': startDistance,
+      'beginDirection': {'x': beginDirection.x, 'y': beginDirection.y},
+      'begin': {'x': begin.x, 'y': begin.y}};
   }
+  
+  num getSegmentDistance();
+  
+  num getTotalDistance() => startDistance + getSegmentDistance();
   
   void draw(ctx);
   

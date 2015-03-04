@@ -23,5 +23,7 @@ abstract class Player<G> {
   
   List<PathSegment> pathSegments = [];
   
+  num distance = 0;
+  
   Player(String this.name, G this.game);
 }

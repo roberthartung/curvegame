@@ -1,10 +1,5 @@
 part of curvegame.server;
 
-const int ROTATION_STEP = 2; // 2° per tick
-const int LINE_STEP = 1; // 1px per tick
-const int TICK_DELAY = 15;
-const int TICKS_PER_SECONDS = (1000.0 ~/ TICK_DELAY);
-
 class Game extends common.Game<Player> {
   List<String> colors = ['red', 'green', 'yellow', 'blue', 'cyan', 'white', 'pink'];
   
@@ -15,22 +10,35 @@ class Game extends common.Game<Player> {
   int playerLimit = 2;
   
   Map positions = {};
-   
+  
   Timer tickTimer;
   
   Timer endGameTimer = null;
-   
+  
   String winningPlayer = null;
-   
+  
   // First spawn after 5 seconds
-  int nextEntitySpawnTick = TICKS_PER_SECONDS*5;
-   
-  int tickCount = 0;
+  int nextPowerUpSpawnTick = common.TICKS_PER_SECONDS*5;
+  
+  List<ClassMirror> availablePowerUps = [];
+  
+  bool _running = false;
+  
+  bool get isRunning => _running == true;
+  
+  int lineWidth = common.DEFAULT_LINE_WIDTH;
      
-  common.Entity entity = null;
+  //common.DrawablePowerUp powerUp = null;
 
   Game(gameId, password) : super(gameId, password) {
     players = new List<Player>();
+    TypeMirror baseClass = reflectType(PowerUp);
+    (baseClass.owner as LibraryMirror).declarations.forEach((Symbol s, DeclarationMirror decl) {
+      if(decl is ClassMirror && !decl.isAbstract && decl.isSubtypeOf(baseClass)) {
+        availablePowerUps.add(decl);
+      }
+    });
+    print('availablePowerUps: $availablePowerUps');
   }
   
   bool addPlayer(Player player) {
@@ -135,46 +143,53 @@ class Game extends common.Game<Player> {
   }
   
   void init() {
-    print('[$gameId] Initialized');
     Random r = new Random();
     players.forEach((Player player) {
-      // 100px border
+      // 100px border, random position
       player.position = new Point(100+r.nextInt(width-200), 100+r.nextInt(height-200));
       // Direction
       num angle = r.nextInt(360);
       double radians = angle/180*PI;
       player.direction = new common.Vector(cos(radians), sin(radians));
-      player.currentSegment = new common.LineSegment(player.direction, player.position, common.DEFAULT_LINE_WIDTH);
+      // Create first line segment
+      // player.currentSegment = new common.LineSegment(player.direction, player.position, common.DEFAULT_LINE_WIDTH, 0);
+      player.beginLine();
       positions[player.name] = getPlayerPosition(player);
     });
     
     sendPositions();
-  }
-  
-  Map getPlayerPosition(Player player) {
-    Map position = {};
-    position['position'] = {'x': player.position.x, 'y': player.position.y};
-    if(player.currentSegment is common.ArcSegment) {
-      position['arc'] = player.currentSegment.toObject();
-    } else {
-      position['line'] = player.currentSegment.toObject();
-    }
-    // position['angle'] = player.angle;
-    return position;
-  }
-  
-  void _start() {
-    players.forEach((Player player) {
-      player.send({'type': 'start'});
-    });
     
-    tickTimer = new Timer.periodic(new Duration(milliseconds: TICK_DELAY), gameTick);
+    print('[$gameId] Initialized');
   }
   
   void sendPositions() {
     players.forEach((Player player) {
       player.send({'type': 'positions', 'positions': positions});
     });
+  }
+  
+  Map getPlayerPosition(Player player) {
+    Map position = {};
+    position['position'] = {'x': player.position.x, 'y': player.position.y};
+    if(player.currentSegment is common.ArcSegment) {
+      common.ArcSegment arc = player.currentSegment as common.ArcSegment;
+      position['arc'] = {'angle': arc.angle};
+    } else if(player.currentSegment is common.LineSegment) {
+      common.LineSegment line = player.currentSegment as common.LineSegment;
+      position['line'] = {'length': line.length};
+    } else {
+      print('[ERROR] Unable to get player position for ${player.name}');
+    }
+    return position;
+  }
+  
+  void _start() {
+    _running = true;
+    players.forEach((Player player) {
+      player.send({'type': 'start'});
+    });
+    
+    tickTimer = new Timer.periodic(new Duration(milliseconds: common.TICK_DELAY), gameTick);
   }
   
   /**
@@ -206,7 +221,12 @@ class Game extends common.Game<Player> {
     }
   }
   
+  /**
+   * Stop the game
+   */
+  
   void stop() {
+    _running = false;
     print('[$gameId] Game stopped');
     tickTimer.cancel();
     players.forEach((Player player) {
@@ -215,25 +235,46 @@ class Game extends common.Game<Player> {
     });
   }
   
-  void spawnEntity() {
+  List<PowerUp> powerUps = [];
+  
+  List<PowerUp> activePowerUps = [];
+  
+  int _powerUpId = 0;
+  
+  void spawnPowerUp() {
     Random random = new Random();
-    String type = common.ICONS.keys.elementAt(random.nextInt(common.ICONS.keys.length-1));
-    print('New entity: $type');
-    common.Entity entity = new common.Entity(type, random.nextInt(width), random.nextInt(height));
+    int id = _powerUpId++;
+    Point position = new Point(random.nextInt(width), random.nextInt(height));
+    availablePowerUps.shuffle();
+    PowerUp powerUp = availablePowerUps.first.newInstance(new Symbol(''), [id, position]).reflectee;
+    powerUps.add(powerUp);
     players.forEach((Player player) {
-      player.send({'type': 'entity_spawn', 'entity': entity});
+      player.send({'type': 'spawn_powerup', 'powerup': powerUp});
     });
   }
+  
+  /**
+   * Makes a tick in the game
+   */
   
   void gameTick(Timer t) {
     tickCount++;
     
-    if(tickCount == nextEntitySpawnTick) {
-      spawnEntity();
+    if(tickCount == nextPowerUpSpawnTick) {
+      spawnPowerUp();
       Random random = new Random();
-      // Min 3, max 8 seconds
-      nextEntitySpawnTick = tickCount + TICKS_PER_SECONDS * (3 + random.nextInt(5));
+      nextPowerUpSpawnTick = tickCount + common.TICKS_PER_SECONDS * (3 + random.nextInt(5));
     }
+    
+    // Check active power ups
+    List<PowerUp> finishedPowerUps = [];
+    activePowerUps.forEach((PowerUp powerUp) {
+      if(powerUp.tick(tickCount)) {
+        print('[PowerUp] $powerUp finished.');
+        finishedPowerUps.add(powerUp);
+      }
+    });
+    activePowerUps.removeWhere((common.PowerUp e) => finishedPowerUps.contains(e));
     
     positions = {};
     
@@ -242,20 +283,38 @@ class Game extends common.Game<Player> {
       // Only make tick for player if playing
       if(player.isPlaying) {
         // If it's a line simply increase the distance
-        if(player.currentSegment is common.LineSegment) {
-          common.LineSegment line = player.currentSegment;
-          line.distance += LINE_STEP;
-        } else if(player.currentSegment is common.ArcSegment) {
-          // In case of an arc increase angle
-          common.ArcSegment arc = player.currentSegment;
-          arc.angle += ROTATION_STEP;
-        }
-        
-        player.position = player.currentSegment.getEndPoint();
+        player.tick();
         positions[player.name] = getPlayerPosition(player);
+        
+        // Check if a power up was collected
+        List<PowerUp> powerUpsToRemove = [];
+        powerUps.forEach((PowerUp powerUp) {
+          // 15 = radius of circle around icon
+          // TODO(rh): Make 15 a const
+          if(powerUp.position.distanceTo(player.position) <= 15) {
+            powerUpCollected(powerUp, player);
+            powerUpsToRemove.add(powerUp);
+          }
+        });
+        powerUps.removeWhere((common.PowerUp e) => powerUpsToRemove.contains(e));
+        powerUpsToRemove.clear();
       }
     });
     
     sendPositions();
+  }
+  
+  /**
+   * A [Player] collected a [PowerUp]
+   */
+  
+  void powerUpCollected(PowerUp powerUp, Player player) {
+    activePowerUps.add(powerUp);
+    // Depending on the type, some actions have to be taken
+    powerUp.collected(player);
+    print('[PowerUp] Player ${player.name} collected $powerUp');
+    players.forEach((Player player) {
+      player.send({'type': 'collect_powerup', 'powerup': powerUp});
+    });
   }
 }

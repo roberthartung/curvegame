@@ -15,7 +15,7 @@ class ArcSegment extends PathSegment {
   
   num startAngle;
   
-  ArcSegment(Vector beginDirection, math.Point begin, int width, this.direction, this.radius, this.angle) : super(beginDirection, begin, width) {
+  ArcSegment(Vector beginDirection, math.Point begin, int width, num startDistance, this.direction, this.radius, this.angle) : super(beginDirection, begin, width, startDistance) {
     _init();
   }
   
@@ -64,6 +64,8 @@ class ArcSegment extends PathSegment {
     return map;
   }
   
+  num getSegmentDistance() => (2 * math.PI * radius * angle / 360);
+  
   bool containsPoint(math.Point point) {
     double distance = point.distanceTo(arcMiddle);
     if(distance < (radius - width/2) || distance > (radius+width/2)) {
@@ -72,21 +74,27 @@ class ArcSegment extends PathSegment {
     
     Vector pointDirection = new Vector(point.x - arcMiddle.x, point.y - arcMiddle.y);
     double angle = pointDirection.angle();
+    num _startAngle = (direction == ArcDirection.LEFT) ? getEndAngle() : startAngle;
+    num _endAngle = (direction == ArcDirection.LEFT) ? startAngle : getEndAngle();
     
-    double endAngle = getEndAngle();
+    if(_startAngle > _endAngle) {
+      _endAngle += 360;
+    }
     
-    if(startAngle <= angle && endAngle >= angle) {
+    if(_startAngle <= angle && _endAngle >= angle) {
+      //print('1: $_startAngle $angle $_endAngle');
       return true;
     }
     
-    if(startAngle <= angle && (endAngle+360) >= angle) {
-      return true;
-    }
+    angle += 360;
     
-    if(startAngle-360 <= angle && (endAngle) >= angle) {
+    if(_startAngle <= angle && _endAngle >= angle) {
+      //print('2: $_startAngle $angle $_endAngle');
       return true;
     }
     
     return false;
   }
+  
+  String toString() => "[ArcSegment,$radius,$begin,$startDistance,$angle]";
 }

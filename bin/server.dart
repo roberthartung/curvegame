@@ -3,13 +3,35 @@ library curvegame_server;
 import 'dart:io';
 import 'dart:convert';
 import 'dart:async';
+import 'dart:mirrors';
 
 import 'package:curvegame/common.dart' as common;
 import 'package:curvegame/server.dart' as server;
 
 Map<String, server.Game> games = {};
 
+/*
+ List<ClassMirror> availablePowerUps = [];
+  TypeMirror baseClass = reflectType(server.PowerUp);
+  (baseClass.owner as LibraryMirror).declarations.forEach((Symbol s, DeclarationMirror decl) {
+    if(decl is ClassMirror && !decl.isAbstract && decl.isSubtypeOf(baseClass)) {
+      availablePowerUps.add(decl);
+    }
+  });
+  print('availablePowerUps: $availablePowerUps');
+  availablePowerUps.shuffle();
+  server.PowerUp powerUp = availablePowerUps.first.newInstance(new Symbol(''), [0, null]).reflectee;
+  print('powerUp: $powerUp ${powerUp.runtimeType}');
+  return;
+*/
+
 void main() {
+  /*
+  server.Game game = new server.Game('test', 'test');
+  game.spawnPowerUp();
+  return;
+  */
+  
   // Bind server
   ServerSocket.bind("0.0.0.0", common.SERVER_PORT).then((ServerSocket serverSocket) {
     HttpServer httpServer = new HttpServer.listenOn(serverSocket);

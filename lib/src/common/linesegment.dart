@@ -1,21 +1,21 @@
 part of curvegame.common;
 
 class LineSegment extends PathSegment {
-  num distance;
+  num length;
   
-  LineSegment(Vector beginDirection, math.Point begin, int width, {this.distance: 0}) : super(beginDirection, begin, width);
+  LineSegment(Vector beginDirection, math.Point begin, int width, num startDistance, {this.length: 0}) : super(beginDirection, begin, width, startDistance);
   
   LineSegment.fromObject(Map data) : super.fromObject(data) {
-    distance = data['distance'];
+    length = data['length'];
   }
   
   math.Point getEndPoint() {
-    return new math.Point(begin.x + beginDirection.x * distance, begin.y + beginDirection.y * distance);
+    return new math.Point(begin.x + beginDirection.x * length, begin.y + beginDirection.y * length);
   }
   
   Map toObject() {
     Map map = super.toObject();
-    map['distance'] = distance;
+    map['length'] = length;
     return map;
   }
   
@@ -34,14 +34,13 @@ class LineSegment extends PathSegment {
     num maxY = math.max(begin.y, end.y);
     
     if(minX <= point.x && maxX >= point.x && minY <= point.y && maxY >= point.y) {
-      double c1 = (point.x - begin.x) / (end.x - begin.x);
-      double c2 = (point.y - begin.y) / (end.y - begin.y);
-      
-      if((c1-c2).abs() < 0.1) {
+      num distance = ((end.y-begin.y)*point.x-(end.x-begin.y)*point.y+end.x*begin.y-end.y*begin.x).abs() / math.sqrt(math.pow(end.y - begin.y, 2) + math.pow(end.x - begin.y, 2));
+      if(distance <= width/2) {
         return true;
       }
     }
-    
     return false;
   }
+  
+  num getSegmentDistance() => length;
 }

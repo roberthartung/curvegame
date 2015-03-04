@@ -28,7 +28,7 @@ class Game extends common.Game<Player> {
   
   bool started = false;
   
-  List<common.DrawableEntity> entities = [];
+  Map<int,PowerUp> powerUps = {};
   
   Game(String gameId, String password, this.webSocket, bool this.isGameOwner) : super(gameId, password) {
     players = new List<Player>();
@@ -117,6 +117,7 @@ class Game extends common.Game<Player> {
   
   void onMessage(MessageEvent ev) {
     Map data = JSON.decode(ev.data);
+    //print("message type: ${data['type']}");
     switch(data['type']) {
       case "join" :
         Player player = new Player.fromObject(data['player'], this);
@@ -182,6 +183,10 @@ class Game extends common.Game<Player> {
         break;
       case "stop" :
         print('game stopped');
+        if(pingTimer != null) {
+          pingTimer.cancel();
+          pingTimer = null;
+        }
         started = false;
         readyButton.disabled = false;
         readyButton.classes.remove('abort');
@@ -203,20 +208,37 @@ class Game extends common.Game<Player> {
       case "countdown" :
         readyButton.text = 'Game starts in ${data['time']}';
         break;
-      case "entity_spawn" :
-        common.DrawableEntity entity = new common.DrawableEntity.fromObject(data['entity']);
-        entities.add(entity);
+      case "spawn_powerup" :
+        print('power up spawned: $data');
+        PowerUp powerUp = PowerUp.instanceFomObject(data['powerup']);
+        powerUps[powerUp.id] = powerUp;
+        // TODO(rh)
+        // = new PowerUp.fromObject(data['powerup']);
+        //
         break;
-        // Player collected an entity
-      case "entity_collect" :
-        // Player collected a entity
+      case "collect_powerup" :
+        // Player collected a PowerUp
+        powerUps.remove(data['powerup']['id']);
+        break;
+      case "current_segment" :
+        Player player = getPlayer(data);
+        print('[${player.name}] Current Segment received');
+        if(data.containsKey("arc")) {
+          player.currentSegment = new common.ArcSegment.fromObject(data['arc']);
+        } else if(data.containsKey("line")) {
+          player.currentSegment = new common.LineSegment.fromObject(data['line']);
+        } else {
+          print('[ERROR] Current Segment wrong');
+        }
         break;
       case "segment" :
         Player player = getPlayer(data);
         if(player.isPlaying) {
           if(data.containsKey("arc")) {
+            //print('[${player.name}] arc segment');
             player.pathSegments.add(new common.ArcSegment.fromObject(data['arc']));
           } else if(data.containsKey("line")) {
+            //print('[${player.name}] line segment');
             player.pathSegments.add(new common.LineSegment.fromObject(data['line']));
           }
         }
@@ -224,25 +246,19 @@ class Game extends common.Game<Player> {
       case "positions" :
           (data['positions'] as Map<String, Map>).forEach((String playerName, Map info) {
             Player player = getPlayerByName(playerName);
-            
-            common.PathSegment newSegment;
-            if(info.containsKey('arc')) {
-              newSegment = new common.ArcSegment.fromObject(info['arc']);
-            } else if(info.containsKey('line')) {
-              newSegment = new common.LineSegment.fromObject(info['line']);
-            }
-            
-            player.step(new Point(info['position']['x'], info['position']['y']), newSegment);
-            // player.step(new Point(info['position']['x'], info['position']['y']));
-            //print('position of player $playerName: $info');
-            // client.Player curve = (players[playerName]['curve'] as client.Player);
-            //curve.step();
-            //LIElement li = players[playerName]['li'];
+            num stepAngle = info.containsKey('arc') ? info['arc']['angle'] : null;
+            num stepLength = info.containsKey('line') ? info['line']['length'] : null;
+            player.step(new Point(info['position']['x'], info['position']['y']), stepAngle: stepAngle, stepLength: stepLength);
           });
           
           if(!started) {
             draw();
+            // TODO(rh): Start loop for drawing arrows and local positions
           }
+        break;
+      case "pong" :
+        int ping = new DateTime.now().millisecondsSinceEpoch - pingStart;
+        print('ping: ${ping}ms');
         break;
       case "start":
         started = true;
@@ -285,22 +301,9 @@ class Game extends common.Game<Player> {
   void draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
    
-    entities.forEach((common.DrawableEntity entity) {
+    powerUps.forEach((int id, PowerUp powerUp) {
       ctx.save();
-      
-      ctx.fillStyle = 'green';
-      ctx.beginPath();
-      ctx.arc(entity.x, entity.y, 15, 0, 2*PI);
-      ctx.closePath();
-      ctx.fill();
-      
-      // TODO(rh): Color/Target from entity
-      ctx.font = '20px FontAwesome';
-      ctx.textBaseline = 'top';
-      ctx.textAlign = 'left';
-      ctx.fillStyle = 'white';
-      TextMetrics metrics = ctx.measureText(entity.iconText);
-      ctx.fillText(entity.iconText, entity.x - metrics.width/2, entity.y-10);
+      powerUp.draw(ctx);
       ctx.restore();
     });
     
@@ -321,7 +324,15 @@ class Game extends common.Game<Player> {
   bool leftKeyPressed = false;
   bool rightKeyPressed = false;
   
+  Timer pingTimer = null;
+  
+  int pingStart;
+  
   void start() {
     window.requestAnimationFrame(gameLoop);
+    pingTimer = new Timer.periodic(new Duration(seconds: 1), (Timer t) {
+      pingStart = new DateTime.now().millisecondsSinceEpoch;
+      webSocket.send(JSON.encode({'type': 'ping', 'time': pingStart}));
+    });
   }
 }

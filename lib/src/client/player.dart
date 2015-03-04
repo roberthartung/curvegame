@@ -5,6 +5,8 @@ class Player extends common.Player<Game> {
   
   LIElement li;
   
+  int points = 0;
+  
   Player.fromObject(Map data, Game game) : super(data['name'], game) {
     this.color = data['color'];
     // TODO(rh): ready
@@ -16,21 +18,32 @@ class Player extends common.Player<Game> {
   <span class="points">0</span>''');
   }
   
-  int points = 0;
-  
   void setReady(bool ready) {
     print('$name is ready: $ready');
     isReady = ready;
     li.querySelector('.ready i').classes.toggleAll(['fa-check', 'fa-times']);
   }
   
-  bool step(Point newPosition, common.PathSegment newSegment) {
+  /**
+   * Make a step
+   */
+  
+  // common.PathSegment newSegment
+  
+  bool step(Point newPosition, {stepAngle: null, stepLength: null}) {
     if(!isPlaying) {
       return false;
     }
     
     position = newPosition;
-    currentSegment = newSegment;
+    if(stepAngle != null && currentSegment is common.ArcSegment) {
+      (currentSegment as common.ArcSegment).angle = stepAngle;
+    } else if(stepLength != null && currentSegment is common.LineSegment) {
+      (currentSegment as common.LineSegment).length = stepLength;
+    } else {
+      print('[ERROR] WRONG STEP INFORMATION (ANGLE/LENGTH). angle: $stepAngle length: $stepLength segment: $currentSegment');
+    }
+    // TODO(rh): More dynamic points calculation
     points++;
     
     li.querySelector('.points').text = '${points}';
@@ -60,25 +73,63 @@ class Player extends common.Player<Game> {
     segment.draw(ctx);
     ctx.stroke();
     // TODO(rh): Collision detection!
+    
+    game.players.where((Player otherPlayer) => otherPlayer.isPlaying).forEach((Player otherPlayer) {
+      
+    });
+    
     ctx.restore();
   }
   
-  bool draw(CanvasRenderingContext2D ctx) {
-    // Draw Point
+  /**
+   * Check a segment against this player's position
+   * TODO(rh): Use web worker for collision detection later!
+   */
+  
+  bool collisionDetection(Player otherPlayer, common.PathSegment segment) {
+    // If there actually is a collision possible
+    if(segment.containsPoint(position)) {
+      num distanceDifference = currentSegment.getTotalDistance() - segment.getTotalDistance(); 
+      //print('[Segment contains point] position: $position distanceDifference: $distanceDifference segment: $segment');
+      // Collision if the player is different or the distance is greater than 5
+      if(otherPlayer != this || distanceDifference > 5) {
+        isPlaying = false;
+        print('[${name}] collision');
+        if(isLocal) {
+          collision('$name');
+        }
+      }
+    }
     
+    return false;
+  }
+  
+  bool draw(CanvasRenderingContext2D ctx) {
+    // color
     ctx.fillStyle = color;
     ctx.strokeStyle = color;
     
     // Draw current position
     ctx.beginPath();
-    // TODO(rh): Get Position from line/segment
     ctx.arc(position.x, position.y, 3, 0, 2*PI);
     ctx.closePath(); // needed?
     ctx.fill();
     
     // draw path & check for collision
-    
-    pathSegments.forEach((common.PathSegment segment) => drawPathSegment(ctx, segment));
+    // older path segments
+    pathSegments.forEach((common.PathSegment segment) {
+      drawPathSegment(ctx, segment);
+      // For each player check collision with this segment
+      game.players.where((Player otherPlayer) => otherPlayer.isPlaying).forEach((Player otherPlayer) {
+        otherPlayer.collisionDetection(this, segment);
+      });
+    });
+    // current segment
+    game.players.where((Player otherPlayer) => otherPlayer.isPlaying).forEach((Player otherPlayer) {
+      otherPlayer.collisionDetection(this, currentSegment);
+    });
+    // collision detection with currentSegment!
+    // Current segment
     drawPathSegment(ctx, currentSegment);
     
     /*

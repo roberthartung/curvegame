@@ -11,5 +11,7 @@ abstract class Game<P> {
     
   int height = 800;
   
+  int tickCount = 0;
+  
   Game(this.gameId, this.password);
 }

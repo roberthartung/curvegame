@@ -28,7 +28,7 @@ CanvasRenderingContext2D ctx;
 common.ArcSegment arcSegment;
 
 void createArc() {
-  arcSegment = new common.ArcSegment(direction, position, width, side, radius, angle);
+  arcSegment = new common.ArcSegment(direction, position, width, 0, side, radius, angle);
 }
 
 void main() {
