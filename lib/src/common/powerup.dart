@@ -27,32 +27,6 @@ part of curvegame.common;
  *  function: 
  */
 
-/*
- const Map<String, dynamic> ICONS = const {
-  'rocket': ,         // Makes others faster
-  'diamond': ,        // Gives you extra points
-  /*'cubes': 0xf1b3,*/
-  'cube': ,           // Place cube(s)
-  
-  'heart': 0xf004,          // Bypass one line
-  /*'road': 0xf018,*/
-  'random': 0xf074,         // Switch directions
-  // 'bomb': 0xf1e2,        // 
-  'ban': 0xf05e             // No one draws lines
-  
-  // Smaller / larger radius
-  // Smaller / larger line width
-  // Zerfressen von linie (pacman style) -> Punkte klauen
-};
-enum Target {OTHERS, SELF, ALL}
- */
-
-/*
-const int POWERUP_FLAG_SELF = 0x1;
-const int POWERUP_FLAG_OTHERS = 0x2;
-const int POWERUP_FLAG_MAP = 0x4;
-*/
-
 abstract class UsablePowerUp {
   
 }
@@ -79,38 +53,14 @@ abstract class TimedPowerUp {
   void onEnd();
 }
 
-/*
-abstract class SlowdownPowerUp {
-}
-
-abstract class SpeedUpPowerUp {
-}
-
-abstract class ExtraPointsPowerUp {
-  // _flags |= POWERUP_FLAG_SELF;
-}
-
-abstract class CubesPowerUp {
-  // _flags |= POWERUP_FLAG_MAP;
-}
-*/
-
 abstract class PowerUp {
   /**
-   * Variables
+   * Position and ID
    */
-  
-  // String _type;
   
   math.Point _position;
     
   int _id;
-  
-  /**
-   * Internal flags depending on the type
-   */
-  
-  int _flags;
   
   /**
    * Getter
@@ -120,32 +70,11 @@ abstract class PowerUp {
   
   math.Point get position => _position;
   
-  //String get type => _type;
-  
   /**
    * Default constructor
    */
   
   PowerUp(this._id, this._position);
-    /*
-    switch(_type) {
-      case 'bug' :
-      case 'diamond' :
-      case 'cube' :
-      case 'heart' :
-        _flags |= POWERUP_FLAG_SELF; 
-        //_target = Target.SELF;
-        break;
-      case 'rocket' :
-      case 'random' :
-        _flags |= POWERUP_FLAG_OTHERS; 
-        //_target = Target.OTHERS;
-        break;
-      case 'ban' :
-        //_target = Target.ALL;
-        break;
-    }
-    */
   
   /**
    * toString

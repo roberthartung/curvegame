@@ -1,15 +1,6 @@
 part of curvegame.client;
 
-/*abstract class DrawablePowerUp extends PowerUp {
-  
-  
-  
-}
- */
-
 abstract class PowerUp extends common.PowerUp {
-  // PowerUp(id, position) : super(id, position);
-
   PowerUp.fromObject(icon, Map object) : super(object['id'], new Point(object['position']['x'], object['position']['y'])) {
     iconText = new String.fromCharCode(icon);
   }
