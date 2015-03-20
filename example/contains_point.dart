@@ -1,7 +1,8 @@
 import 'dart:math';
 import 'dart:html';
-import 'package:curvegame/common.dart';
+//import 'package:curvegame/common.dart';
 
+/*
 CanvasRenderingContext2D ctx;
 CanvasElement canvas;
 ArcSegment arc;
@@ -62,3 +63,4 @@ void main() {
     draw();
   });
 }
+*/

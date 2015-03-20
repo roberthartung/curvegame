@@ -1,12 +1,51 @@
 part of curvegame.client;
 
-class Player extends common.Player<Game> {
+class Player {
   bool isLocal = false;
   
   LIElement li;
   
   int points = 0;
   
+  final Peer peer;
+  
+  final CurveGame game;
+  
+  StringProtocol _chatChannel;
+      
+  GameProtocol _gameChannel;
+  
+  // TODO(RH): Game Instance?
+  Player(this.peer, this.game) {
+    peer.onChannelCreated.listen((final DataChannelProtocol protocol) {
+      if(protocol is StringProtocol) {
+        _chatChannel = protocol;
+      } else if(protocol is GameProtocol) {
+        _gameChannel = protocol;
+        
+        _gameChannel.onMessage.listen((GameMessage message) {
+          // handle message ...
+        });
+        
+        _gameChannel.channel.onOpen.listen((Event ev) {
+          _gameChannel.send(null);
+        });
+      }
+      
+      print('DataChannelProtocol: $protocol');
+      /*
+      print('Channel ${channel.label} created with protocol ${channel.protocol}');
+      
+      // TODO(rh): Check protocol and instantiate protocol handler
+      
+      channel.onOpen.listen((Event ev) {
+        print('Channel ${channel.label} open');
+      });
+      */
+    });
+  }
+  
+  /*
   Player.fromObject(Map data, Game game) : super(data['name'], game) {
     this.color = data['color'];
     // TODO(rh): ready
@@ -17,6 +56,7 @@ class Player extends common.Player<Game> {
   <span class="name">$name</span>
   <span class="points">0</span>''');
   }
+  */
   
   void setReady(bool ready) {
     print('$name is ready: $ready');

@@ -105,15 +105,6 @@ button.button {
   background-color: #000;
 }
 
-#game {
-  display: none;
-}
-
-#overlay-login {
-  background-color: #333;
-  position: relative;
-}
-
 #login input {
   width: 100%;
   box-sizing: border-box;
@@ -138,7 +129,8 @@ button.button {
   margin-top: -150px;
 }
 
-#game, #overlay-login {
+.scene {
+  background-color: #333;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -187,4 +179,12 @@ button.button {
   background-color: #990000;
   border: 1px solid #990000;
   color: #fff;
+}
+
+#players > li .ping {
+  float: right;
+}
+
+#players > li .ping:after {
+  content: " ms";
 }

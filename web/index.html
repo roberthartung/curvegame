@@ -7,12 +7,14 @@
       <title>curvegame</title>
       <link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700' rel='stylesheet' type='text/css'>
       <link rel="stylesheet" href="styles/main.css">
+      <link rel="stylesheet" href="styles/game.css">
       <!--<link rel="styhesheet" href="css/font-awesome.min.css">-->
       <link id="font" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
   </head>
   
   <body>
-    <div id="overlay-login" class="flex layout">
+    <!-- Scene 1: Login -->
+    <div id="scene-login" class="flex layout">
       <div id="login">
         <input type="text" id="playername" placeholder="Your name">
         
@@ -23,17 +25,26 @@
         <button class="button" id="join">Join Game</button>
       </div>
     </div>
-    <div id="game" class="flex layout">
-      <div id="left">
-        <div><button class="button ready" type="button" id="ready">Not Ready</button></div>
-        Players
-        
-        <ul id="players"></ul>
-        
-        Use your arrow keys (<i class="fa fa-arrow-left"></i> and <i class="fa fa-arrow-right"></i>) to move your curve. Collect special items to speed up, slow down your curve.
+    <!-- Scene 2: Room -->
+    <div id="scene-room" class="flex layout">
+      <div id="room">
+        <div id="left">
+          <div><button class="button ready" type="button" id="ready">You're not ready</button></div>
+          
+          <p>Players</p>
+          
+          <ul id="players"></ul>
+        </div>
+        <div id="right">
+          Chat...
+        </div>
       </div>
-      <div id="right">
+    </div>
+    <!-- Scene 3: Game -->
+    <div id="scene-game" class="flex layout">
+      <div id="game">
         <canvas id="canvas" width="800" height="800"></canvas>
+        <p>Use your arrow keys (<i class="fa fa-arrow-left"></i> and <i class="fa fa-arrow-right"></i>) to move your curve. Collect special items to speed up, slow down your curve.</p>
       </div>
     </div>
     

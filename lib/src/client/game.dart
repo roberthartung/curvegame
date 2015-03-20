@@ -258,6 +258,7 @@ class Game extends common.Game<Player> {
         break;
       case "pong" :
         int ping = new DateTime.now().millisecondsSinceEpoch - pingStart;
+        querySelector('#ping').text = '$ping';
         print('ping: ${ping}ms');
         break;
       case "start":

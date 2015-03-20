@@ -1,6 +1,6 @@
 import 'dart:html';
 import 'dart:math' as math;
-
+/*
 import 'package:curvegame/common.dart' as common;
 
 enum Side {LEFT, RIGHT}
@@ -169,3 +169,4 @@ void draw(num frame) {
   
   window.requestAnimationFrame(draw);
 }
+*/
