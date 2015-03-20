@@ -1,17 +1,23 @@
+/**
+ * Communication part of the curvegame
+ * Defines messages and protocols
+ */
+
 part of curvegame;
 
 /**
  * Provides an instance of [GameProtocol] and maps the peer to the [RemotePlayer]
  */
 
-class GameProtocolProvider implements ProtocolProvider {
-  final CurveGame game;
+class CurveGameProtocolProvider implements ProtocolProvider {
+  final MessageFactory messageFactory;
   
-  GameProtocolProvider(this.game);
+  CurveGameProtocolProvider(this.messageFactory);
   
   DataChannelProtocol provide(Peer peer, RtcDataChannel channel) {
     // .peerToPlayer[peer]
-    return new GameProtocol(game, channel);
+    // Peer peer, 
+    return new MessageProtocol(channel, messageFactory);
   }
 }
 
@@ -19,8 +25,8 @@ class GameProtocolProvider implements ProtocolProvider {
  * Player changed ready status
  */
 
-class ReadyMessage extends GameMessage {
-  static int MESSAGE_ID = 0x01;
+class ReadyMessage extends CurveGameMessage {
+  final int PAYLOAD_LENGTH = 1;
   
   final bool ready;
   
@@ -35,40 +41,33 @@ class ReadyMessage extends GameMessage {
    * Remote Constructor
    */
   
-  ReadyMessage._fromByteData(ByteData data)
+  ReadyMessage.unserialize(ByteData data)
     : ready = (data.getUint8(1) == 0xFF);
   
   TypedData serialize() {
-    ByteData data = new ByteData(2);
-    data.setUint8(0, MESSAGE_ID);
+    ByteData data = new ByteData(1);
     data.setUint8(1, ready ? 0xFF : 0x00);
     return data;
   }
 }
 
-class PingMessage extends GameMessage {
-  static const int MESSAGE_ID = 0x02;
-  
-  //final int time;
+class PingMessage extends CurveGameMessage {
+  final int PAYLOAD_LENGTH = 0;
   
   /**
    * Local constructor
    */
   
-  PingMessage() /*: time = (new DateTime.now().millisecondsSinceEpoch)*/;
+  PingMessage();
   
   /**
    * Remote Constructor
    */
   
-  PingMessage._fromByteData(ByteData data)/*
-    : time = (data.getInt64(1))*/;
+  PingMessage.unserialize(ByteData data);
   
   TypedData serialize() {
-    ByteData data = new ByteData(1/*+8*/);
-    data.setUint8(0, MESSAGE_ID);
-    //data.setInt64(1, time);
-    return data;
+    return null;
   }
 }
 
@@ -76,8 +75,8 @@ class PingMessage extends GameMessage {
  * TODO(rh): Do we need two different messages?
  */
 
-class PongMessage extends GameMessage {
-  static const int MESSAGE_ID = 0x03;
+class PongMessage extends CurveGameMessage {
+  final int PAYLOAD_LENGTH = 0;
   
   /**
    * Local constructor
@@ -89,11 +88,9 @@ class PongMessage extends GameMessage {
    * Remote Constructor
    */
   
-  PongMessage._fromByteData(ByteData data);
+  PongMessage.unserialize(ByteData data);
   
   TypedData serialize() {
-    ByteData data = new ByteData(1);
-    data.setUint8(0, MESSAGE_ID);
-    return data;
+    return null;
   }
 }

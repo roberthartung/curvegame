@@ -10,5 +10,6 @@ class LocalCurvePlayer extends LocalPlayer with ReadyPlayer {
 class RemoteCurvePlayer extends RemotePlayer with ReadyPlayer {
   RemoteCurvePlayer(P2PGame game, Peer peer) : super(game, peer);
   
+  // Wait for 
   // Implement parsing of remote messages
 }

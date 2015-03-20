@@ -7,8 +7,9 @@ class Vector<T extends num> {
   
   Vector(this.x, this.y) {
     double l = length();
-    x /= l;
-    y /= l;
+    // Type casting not needed. But added to remove the warning.
+    x = (x/l) as T;
+    y  = (y/l) as T;
   }
   
   double length() {
