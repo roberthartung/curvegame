@@ -1,5 +1,9 @@
 part of curvegame;
 
+/**
+ * Basic Scene
+ */
+
 abstract class Scene {
   Element rootElement;
   
@@ -16,6 +20,10 @@ abstract class Scene {
   
   void disable();
 }
+
+/**
+ * Login Scene
+ */
 
 class LoginScene extends Scene {
   ButtonElement _joinButton;
@@ -48,7 +56,7 @@ class LoginScene extends Scene {
 }
 
 /**
- * Displays the room, its players and handles ready state
+ * Displays the room, its players and handles ready state and chat
  */
 
 class RoomScene extends Scene {
@@ -56,18 +64,60 @@ class RoomScene extends Scene {
   
   Room room;
   
+  UListElement _playersList;
+  
   RoomScene(this.game) : super(querySelector('#scene-room')) {
     game.onJoinRoom.listen((Room room) {
       this.room = room;
       room.peers.forEach(_peerJoined);
+      room.onJoin.listen(_peerJoined);
+      room.onLeave.listen(_peerLeft);
+    });
+    
+    game.onPlayerJoin.listen((Player player) {
+      _playerJoined(player);
+      if(player is RemotePlayer) {
+        print('RemotePlayer $player joined.');
+        // TODO(rh): 
+      } else {
+        // LocalPlayer joined
+      }
+    });
+    
+    _playersList = rootElement.querySelector('#players');
+    
+    InputElement messageInput = rootElement.querySelector('#message');
+    
+    messageInput.onKeyDown.listen((KeyboardEvent ev) {
+      if(ev.keyCode == KeyCode.ENTER) {
+        ev.preventDefault();
+        print('ChatMessage: ${messageInput.value}');
+        // Send Message to other peers
+        // Use Peer to Player Map?
+        room.peers.forEach((Peer peer) {
+          // TODO(rh): Get StringProtocol from Player? (Chat) and send ChatMessage
+        });
+        messageInput.value = '';
+      }
     });
   }
   
-  void _peerJoined(Peer peer) {
+  void _playerJoined(Player player) {
     
   }
   
+  void _peerJoined(Peer peer) {
+    print('Peer $peer joined room $room');
+    _playersList.appendHtml('<li class="player" data-id="${peer.id}"><span class="name">Player #${peer.id}</span></li>');
+  }
+  
+  void _peerLeft(Peer peer) {
+    print('Peer $peer left room $room');
+    _playersList.querySelector('.player[data-id="${peer.id}"]').remove();
+  }
+  
   void enable() {
+    
   }
   
   void disable() {

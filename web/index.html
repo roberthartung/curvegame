@@ -27,7 +27,7 @@
     </div>
     <!-- Scene 2: Room -->
     <div id="scene-room" class="flex layout">
-      <div id="room">
+      <div id="room" class="flex layout">
         <div id="left">
           <div><button class="button ready" type="button" id="ready">You're not ready</button></div>
           
@@ -36,7 +36,10 @@
           <ul id="players"></ul>
         </div>
         <div id="right">
-          Chat...
+          <div id="chat-messages">
+            <ul id="messages"></ul>
+          </div>
+          <input type="text" id="message">
         </div>
       </div>
     </div>

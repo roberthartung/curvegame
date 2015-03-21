@@ -15,9 +15,49 @@ class CurveGameProtocolProvider implements ProtocolProvider {
   CurveGameProtocolProvider(this.messageFactory);
   
   DataChannelProtocol provide(Peer peer, RtcDataChannel channel) {
-    // .peerToPlayer[peer]
-    // Peer peer, 
-    return new MessageProtocol(channel, messageFactory);
+    switch(channel.protocol) {
+      case 'game' :
+        return new MessageProtocol(channel, messageFactory);
+      case 'chat' :
+        return new StringProtocol(channel);
+      default :
+        return new RawProtocol(channel);
+    }
+  }
+}
+
+/**
+ * Game Message Interface
+ */
+
+abstract class CurveGameMessage {
+  int get PAYLOAD_LENGTH;
+  ByteData serialize();
+}
+
+/**
+ * Handles serialization and instantiation of messages
+ */
+
+class CurveGameMessageFactory implements MessageFactory<CurveGameMessage> {
+  CurveGameMessage unserialize(TypedData data) {
+    Uint8List list = data.buffer.asUint8List();
+    ByteData bytes = data.buffer.asByteData(1);
+    switch(list.first) {
+      case 0x01 :
+        // return new PlayerNameMessage.unserialize();
+        break;
+    }
+    // Get id from data and instantiate correct message
+    // TODO(rh): Implementation
+    return null;
+  }
+
+  TypedData serialize(CurveGameMessage message) {
+    ByteData data = new ByteData(1 + message.PAYLOAD_LENGTH);
+    data.setUint8(0, 0x00 /* MessageType */);
+    data.buffer.asUint8List(1).setAll(1, message.serialize().buffer.asUint8List());
+    return data;
   }
 }
 
