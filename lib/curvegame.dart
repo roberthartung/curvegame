@@ -5,6 +5,7 @@ import 'package:webrtc_utils/game.dart';
 import 'dart:async';
 import 'dart:html';
 import 'dart:typed_data';
+import 'dart:convert';
 
 part 'game.dart';
 part 'scenes.dart';

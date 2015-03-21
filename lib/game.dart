@@ -5,6 +5,8 @@ class CurveGame extends P2PGame {
   LoginScene _loginScene;
   GameScene _gameScene;
   
+  String playerName;
+  
   // TODO(rh): Pass ProtocolFactory/ProtocolProvider and MessageFactory to P2PGame
   CurveGame() : super("ws://" + window.location.hostname + ":28080", rtcConfiguration) {
     setProtocolProvider(new CurveGameProtocolProvider(new CurveGameMessageFactory()));
@@ -35,18 +37,24 @@ class CurveGame extends P2PGame {
   }
   
   void _onPlayerJoined(Player player) {
-    if(player is RemotePlayer) {
+    if(player is RemoteCurvePlayer) {
       // Create Channels if local id is smaller than remote peer id
       if(id < player.peer.id) {
         player.peer.createChannel('game', {'protocol': 'game'});
         player.peer.createChannel('chat', {'protocol': 'chat'});
       }
+      
+      player.getGameChannel().then((MessageProtocol protocol) {
+        print('[$this] Game Channel opened.');
+        protocol.send((localPlayer as LocalCurvePlayer)._playerNameMessage);
+      });
     }
   }
   
   @override
   LocalPlayer createLocalPlayer(int id) {
-    return new LocalCurvePlayer(this, id);
+    print('LocalCurvePlayerName: ${_loginScene.playerName}');
+    return new LocalCurvePlayer(this, id, _loginScene.playerName);
   }
   
   @override

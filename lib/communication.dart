@@ -31,8 +31,7 @@ class CurveGameProtocolProvider implements ProtocolProvider {
  */
 
 abstract class CurveGameMessage {
-  int get PAYLOAD_LENGTH;
-  ByteData serialize();
+  Object serialize();
 }
 
 /**
@@ -40,24 +39,40 @@ abstract class CurveGameMessage {
  */
 
 class CurveGameMessageFactory implements MessageFactory<CurveGameMessage> {
-  CurveGameMessage unserialize(TypedData data) {
-    Uint8List list = data.buffer.asUint8List();
-    ByteData bytes = data.buffer.asByteData(1);
-    switch(list.first) {
-      case 0x01 :
-        // return new PlayerNameMessage.unserialize();
-        break;
+  /**
+   * Unserializes data from a string (JSON) to a message
+   */
+  
+  CurveGameMessage unserialize(dynamic message) {
+    Object data = JSON.decode(message);
+    if(data is Map) {
+      if(data.containsKey('PlayerNameMessage')) {
+        return new PlayerNameMessage.unserialize(data['PlayerNameMessage']);
+      }
+    } else {
+      throw "Unable to decode CurveGameMessage.";
     }
-    // Get id from data and instantiate correct message
-    // TODO(rh): Implementation
     return null;
   }
+  
+  /**
+   * Serialized a message to a string (via json)
+   */
 
-  TypedData serialize(CurveGameMessage message) {
-    ByteData data = new ByteData(1 + message.PAYLOAD_LENGTH);
-    data.setUint8(0, 0x00 /* MessageType */);
-    data.buffer.asUint8List(1).setAll(1, message.serialize().buffer.asUint8List());
-    return data;
+  dynamic serialize(CurveGameMessage message) {
+    return JSON.encode({message.runtimeType.toString(): message.serialize()});
+  }
+}
+
+class PlayerNameMessage implements CurveGameMessage {
+  final String name;
+  
+  PlayerNameMessage(this.name);
+  
+  PlayerNameMessage.unserialize(this.name);
+  
+  Object serialize() {
+    return name;
   }
 }
 
@@ -65,9 +80,7 @@ class CurveGameMessageFactory implements MessageFactory<CurveGameMessage> {
  * Player changed ready status
  */
 
-class ReadyMessage extends CurveGameMessage {
-  final int PAYLOAD_LENGTH = 1;
-  
+class ReadyMessage implements CurveGameMessage {
   final bool ready;
   
   /**
@@ -81,19 +94,14 @@ class ReadyMessage extends CurveGameMessage {
    * Remote Constructor
    */
   
-  ReadyMessage.unserialize(ByteData data)
-    : ready = (data.getUint8(1) == 0xFF);
+  ReadyMessage.unserialize(this.ready);
   
-  TypedData serialize() {
-    ByteData data = new ByteData(1);
-    data.setUint8(1, ready ? 0xFF : 0x00);
-    return data;
+  bool serialize() {
+    return ready;
   }
 }
 
-class PingMessage extends CurveGameMessage {
-  final int PAYLOAD_LENGTH = 0;
-  
+class PingMessage implements CurveGameMessage {
   /**
    * Local constructor
    */
@@ -104,9 +112,9 @@ class PingMessage extends CurveGameMessage {
    * Remote Constructor
    */
   
-  PingMessage.unserialize(ByteData data);
+  PingMessage.unserialize(Object data);
   
-  TypedData serialize() {
+  dynamic serialize() {
     return null;
   }
 }
@@ -116,8 +124,6 @@ class PingMessage extends CurveGameMessage {
  */
 
 class PongMessage extends CurveGameMessage {
-  final int PAYLOAD_LENGTH = 0;
-  
   /**
    * Local constructor
    */
@@ -128,9 +134,9 @@ class PongMessage extends CurveGameMessage {
    * Remote Constructor
    */
   
-  PongMessage.unserialize(ByteData data);
+  PongMessage.unserialize(Object data);
   
-  TypedData serialize() {
+  dynamic serialize() {
     return null;
   }
 }
