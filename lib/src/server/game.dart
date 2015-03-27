@@ -73,7 +73,6 @@ class Game extends common.Game<Player> {
     
     players.add(player);
     
-    
     return true;
   }
   
